@@ -33,26 +33,28 @@ class Chat(val id: Long, val toUserId: Long) {
     }
 
     fun getMessages(lastMessageId: Long, messagesCount: Int): List<Message> {
-        var count = 0
         //вариант через for
         val lastMessages = mutableListOf<Message>()
-        for (message in messages) {
-            if (message.id < lastMessageId || !message.isIncoming) {
-                continue
-            }
-            if (count++ >= messagesCount) {
-                break
-            }
-            lastMessages.add(message.copy(isReaded = true))
+//        var count = 0
+////        val lastMessages = mutableListOf<Message>()
+////        for (message in messages) {
+//            if (message.id < lastMessageId || !message.isIncoming) {
+//                continue
+//            }
+//            if (count++ >= messagesCount) {
+//                break
+//            }
+//            lastMessages.add(message.copy(isReaded = true))
+//        }
+//        return lastMessages
+        //вариант через цепочки
+        return messages.filter {
+            it.id >= lastMessageId && it.isIncoming
+        }.take(
+            messagesCount
+        ).map {
+            it.copy(isReaded = true)
         }
-        return lastMessages
-//вариант через цепочки
-//        return messages.filter {
-//            it.id >= lastMessageId && count < messagesCount && message.isIncoming
-//        }.let {
-//            count++
-//            ru.netology.Message(isReaded = true)
-//    }
     }
 
     fun hasUnreadMessages(): Boolean {
