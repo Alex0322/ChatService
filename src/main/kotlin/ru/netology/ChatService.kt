@@ -12,11 +12,11 @@ class Chat(val id: Long, val toUserId: Long) {
     private var messageId: Long = 0
 
     fun newMessage(content: String) {
-        Message(id = messageId++).also { messages.add(it) }
+        Message(id = messageId++, content = content).also { messages.add(it) }
     }
 
     fun editMessage(messageId: Long, content: String): Message {
-        val messageIndex = messages.indexOfFirst { it.id == messageId }
+        val messageIndex = messages.asSequence().indexOfFirst { it.id == messageId }
         if (messageIndex < 0)
             throw error("Message not found")
         val m = messages[messageIndex].copy(content = content)
@@ -33,32 +33,17 @@ class Chat(val id: Long, val toUserId: Long) {
     }
 
     fun getMessages(lastMessageId: Long, messagesCount: Int): List<Message> {
-        //вариант через for
-        val lastMessages = mutableListOf<Message>()
-//        var count = 0
-////        val lastMessages = mutableListOf<Message>()
-////        for (message in messages) {
-//            if (message.id < lastMessageId || !message.isIncoming) {
-//                continue
-//            }
-//            if (count++ >= messagesCount) {
-//                break
-//            }
-//            lastMessages.add(message.copy(isReaded = true))
-//        }
-//        return lastMessages
-        //вариант через цепочки
-        return messages.filter {
+        return messages.asSequence().filter {
             it.id >= lastMessageId && it.isIncoming
         }.take(
             messagesCount
         ).map {
             it.copy(isReaded = true)
-        }
+        }.toList()
     }
 
     fun hasUnreadMessages(): Boolean {
-        return messages.indexOfFirst { it.isReaded == false } >= 0
+        return messages.asSequence().indexOfFirst { it.isReaded == false } >= 0
     }
 }
 
@@ -67,7 +52,7 @@ class ChatService(val fromUserId: Long) {
     private var chatId: Long = 0
 
     fun messageToUser(toUserId: Long, content: String): Chat {
-        val chatIndex: Int = chats.indexOfFirst { it.toUserId == toUserId }
+        val chatIndex: Int = chats.asSequence().indexOfFirst { it.toUserId == toUserId }
         val c = if (chatIndex >= 0) chats[chatIndex] else createChat(toUserId)
         c.newMessage(content)
         return c
@@ -83,12 +68,12 @@ class ChatService(val fromUserId: Long) {
 
     fun getChats(): List<Chat> = chats.toList()
 
-    fun getUnreadChatsCount(): List<Chat> {
-        return chats.filter { it.hasUnreadMessages() }
+    fun getUnreadChatsCount(): Int {
+        return chats.asSequence().filter { it.hasUnreadMessages() }.count()
     }
 
     fun getChatMessages(chatId: Long, lastMessageId: Long, messagesCount: Int): List<Message> {
-        val chatIndex = chats.indexOfFirst { it.id == chatId }
+        val chatIndex = chats.asSequence().indexOfFirst { it.id == chatId }
         if (chatIndex < 0)
             throw error("Chat not found")
         return chats[chatIndex].getMessages(lastMessageId, messagesCount)
